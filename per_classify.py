@@ -2,9 +2,6 @@ import json
 import os
 import sys
 
-""" Start here """
-
-
 def readAllWordFeatures(filelpaths):
     fileFeatureDict = {}
 
@@ -31,6 +28,26 @@ def readWordFeatures(filepath):
         filestream.close()
     return wordFeatures
 
+def predict(weights,b,filepath,fileFeatureDict):
+
+    wordCounts = fileFeatureDict[filepath]
+    #print("Word count", wordCounts)
+
+    alpha = 0
+    for word, wordCount in wordCounts.items():
+        if(word in weights):
+            wordWeight = weights[word]
+        else:
+            wordWeight = 0
+
+        alpha += wordWeight*wordCount
+    prediction = alpha + b
+
+    return "spam" if prediction > 0 else "ham"
+
+
+""" Start here **************** """
+
 with open('per_model.txt') as parameterfile:
     parameters = json.load(parameterfile)
 
@@ -46,3 +63,20 @@ for drctry, drctry_name, file_name in os.walk(sys.argv[1]):
 
 fileFeatureDict =readAllWordFeatures(all_files)
 #print(fileFeatureDict)
+
+predictedLabels = []
+#do prediction
+for f in all_files:
+    predictedLabel = predict(weights,b,f,fileFeatureDict)
+    predictedLabels = predictedLabels + [predictedLabel]
+
+#WRITE OUTPUT
+writeFilePath = sys.argv[2]
+
+writeContent = ""
+for result in zip(all_files,predictedLabels):
+    writeContent = writeContent + "{0} {1}".format(result[1],result[0]) + "\n"
+
+outputfile = open(writeFilePath,"w", encoding="latin1")
+outputfile.write(writeContent)
+outputfile.close()
