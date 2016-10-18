@@ -30,27 +30,24 @@ def readWordFeatures(labelFilePathTuple):
     return wordFeatures
 
 
-def readAllWordFeatures(labelFilePathTuples):
-    """
-    read word frequency of all document
-    """
+def readAllWordFeatures(SpamData, HamData):
+    """ read word frequency of all document """
+    global labelFilePathTuples
+    labelFilePathTuples = SpamData + HamData
+#print(labelFilePathTuples)
     fileFeatureDict = {}
 
-    for t in labelFilePathTuples:
-        wordFeatures = readWordFeatures(t) #readWordFeatures function
-        fileFeatureDict[t[1]] = wordFeatures
+    for each_f in labelFilePathTuples:
+        wordFeatures = readWordFeatures(each_f) #readWordFeatures function
+        fileFeatureDict[each_f[1]] = wordFeatures
     return fileFeatureDict
 
 
-def trainPerceptron(labelFilePathTuples,fileFeatureDict):
-    """
-    For Ham, set Label = -1, for Spam, set Label = +1
-    return (weights,b)
-    """
-    maxIteration=20
+def trainPerceptron(fileFeatureDict):
+    """ For Ham, set Label = +1, for Spam, set Label = -1
+    return (weights,beta) """
     weights = {}
-    b = 0
-    for i in range(0,maxIteration):
+    for i in range(0,20):
         #randomize file index
         random.shuffle(labelFilePathTuples)
 
@@ -59,9 +56,9 @@ def trainPerceptron(labelFilePathTuples,fileFeatureDict):
             f = t[1]
 
             if t[0] == "ham":
-                trueLabel = -1
+                trueLabel = +1
             else:
-                trueLabel = 1
+                trueLabel = -1
 
             wordCounts = fileFeatureDict[f]
 
@@ -71,17 +68,19 @@ def trainPerceptron(labelFilePathTuples,fileFeatureDict):
                     weights[word] = 0
                 wordWeight = weights[word]
 
-                alpha += wordWeight*wordCount
+                count = wordWeight * wordCount
+                alpha = alpha + count
             #alpha is a prediction result
-            alpha += b
+            beta = 0
+            alpha = alpha + beta
             if(trueLabel * alpha <= 0):
                 for word in wordCounts.keys():
                     weights[word] = weights[word] + trueLabel*wordCounts[word]
-                b = b + trueLabel
+                beta = beta + trueLabel
 
-    return (weights,b)
+    return (weights,beta)
 
-"""START HERE ******************** """
+""" **************** START HERE ******************** """
 
 #list of all files
 HamData = []
@@ -99,35 +98,16 @@ for drctry, drctry_name, file_name in os.walk(sys.argv[1]):
             else:
                  SpamData.append(os.path.join(drctry,every_file))
 
-#Number of all files
-numFiles = len(HamData) + len(SpamData)
-#print("Num of files", numFiles)
-
-"""#select only {downsamplingRatio}% to train, Pick half between Spam and Ham
-numTrainFiles = int(round(downsamplingRatio*numFiles*0.5))
-#for a case that a number of Ham/Spam is less than 5% of data
-numTrainFiles = min(numTrainFiles,len(ham_files),len(spam_files))"""
-
 random.shuffle(HamData)
 random.shuffle(SpamData)
-
-hamCount = len(HamData)
-spamCount = len(SpamData)
-
-#print("ham count", hamCount)
-#print("spam", spamCount)
 
 HamData = [("ham",filepath) for filepath in HamData]
 SpamData = [("spam",filepath) for filepath in SpamData]
 
-labelFilePathTuples = SpamData + HamData
-#print(labelFilePathTuples)
-
 #read features of all files (cached)
-fileFeatureDict = readAllWordFeatures(labelFilePathTuples) #readAllWordFeatures FUNCTION
+fileFeatureDict = readAllWordFeatures(SpamData, HamData) #readAllWordFeatures FUNCTION
 
-parameters = trainPerceptron(labelFilePathTuples,fileFeatureDict)
-
+parameters = trainPerceptron(fileFeatureDict)
 
 with open('per_model.txt','w') as writefile:
      json.dump(parameters,writefile)
