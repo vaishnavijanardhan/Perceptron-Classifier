@@ -50,7 +50,6 @@ def predict(weights,b,filepath,fileFeatureDict):
 
 with open('per_model.txt') as parameterfile:
     parameters = json.load(parameterfile)
-
 weights = parameters[0]
 b = parameters[1]
 
