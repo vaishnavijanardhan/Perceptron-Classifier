@@ -1,88 +1,70 @@
 import sys
 import os
-import json
 import random
+import json
 from collections import Counter
 
-def learnModel(diction,data):
-    for each_file in data:
-            filest = open(each_file,"r",encoding="latin1")
-            file_content = filest.read()
-            tokens = file_content.split()
-            for each_token in tokens:
-                if(each_token in diction):
-                    diction[each_token] = diction[each_token] + 1
-                else:
-                    diction[each_token] = 1
-            filest.close()
-
-
-def readWordFeatures(labelFilePathTuple):
-
-    wordFeatures = {}
-    f = labelFilePathTuple[1]
-    filestream = open(f,"r",encoding="latin1")
-    content = filestream.read()
-    tokens = content.split()
-    wordFeatures = dict(Counter(tokens))
-
-    filestream.close()
-    return wordFeatures
-
-
 def readAllWordFeatures(SpamData, HamData):
-    """ read word frequency of all document """
-    global labelFilePathTuples
     labelFilePathTuples = SpamData + HamData
-#print(labelFilePathTuples)
-    fileFeatureDict = {}
 
-    for each_f in labelFilePathTuples:
-        wordFeatures = readWordFeatures(each_f) #readWordFeatures function
-        fileFeatureDict[each_f[1]] = wordFeatures
+    fileFeatureDict = {}
+    wordFeatures = {}
+
+    for t in labelFilePathTuples:
+        f = t[1]
+        filestream = open(f,"r",encoding="latin1")
+        content = filestream.read()
+        tokens = content.split()
+        wordFeatures = dict(Counter(tokens))
+        filestream.close()
+        #wordFeatures = readWordFeatures(each_f) #readWordFeatures function
+        fileFeatureDict[t[1]] = wordFeatures
     return fileFeatureDict
 
-
-def trainPerceptron(fileFeatureDict):
-    """ For Ham, set Label = +1, for Spam, set Label = -1
-    return (weights,beta) """
+def trainPerceptron(HamData,SpamData,fileFeatureDict):
+    """
+    For Ham, set Label = -1, for Spam, set Label = -1
+    return (weights,b)
+    """
+    labelFilePathTuples = HamData + SpamData
+    random.shuffle(labelFilePathTuples)
     weights = {}
+    b = 0
     for i in range(0,20):
         #randomize file index
-        random.shuffle(labelFilePathTuples)
-
+        #random.shuffle(labelFilePathTuples)
         for t in labelFilePathTuples:
-            #f - filepath
-            f = t[1]
-
-            if t[0] == "ham":
-                trueLabel = +1
+            if t[0] == "spam":
+                trueLabel = 1
             else:
                 trueLabel = -1
 
-            wordCounts = fileFeatureDict[f]
+            wordCounts = fileFeatureDict[t[1]]
 
             alpha = 0
             for word, wordCount in wordCounts.items():
                 if(word not in weights):
                     weights[word] = 0
-                wordWeight = weights[word]
 
-                count = wordWeight * wordCount
-                alpha = alpha + count
-            #alpha is a prediction result
-            beta = 0
-            alpha = alpha + beta
-            if(trueLabel * alpha <= 0):
+                wordWeight = weights[word]
+                alpha = alpha + wordCount*wordWeight
+
+            alpha = alpha + b
+            if((trueLabel * alpha > 0)!=1):
                 for word in wordCounts.keys():
                     weights[word] = weights[word] + trueLabel*wordCounts[word]
-                beta = beta + trueLabel
+                b = b + trueLabel
 
-    return (weights,beta)
+    return (weights,b)
 
-""" **************** START HERE ******************** """
 
-#list of all files
+def getHam():
+    return [("ham",filepath) for filepath in HamData]
+
+def getSpam():
+    return [("spam",filepath) for filepath in SpamData]
+
+""" *********** START HERE *************** """
 HamData = []
 SpamData = []
 
@@ -98,33 +80,25 @@ for drctry, drctry_name, file_name in os.walk(sys.argv[1]):
             else:
                  SpamData.append(os.path.join(drctry,every_file))
 
-""" #Number of all files
-numFiles = len(HamData) + len(SpamData)
-#print("Num of files", numFiles) """
 
-"""#select only {downsamplingRatio}% to train, Pick half between Spam and Ham
-numTrainFiles = int(round(downsamplingRatio*numFiles*0.5))
-#for a case that a number of Ham/Spam is less than 5% of data
-numTrainFiles = min(numTrainFiles,len(ham_files),len(spam_files))"""
+# Training the learner with only 10% of the data
 
-random.shuffle(HamData)
-random.shuffle(SpamData)
+folder_train = 0.1
+random.seed(100)
 
-"""hamCount = len(HamData)
-spamCount = len(SpamData)
+total_files = len(HamData) + len(SpamData)
+total_train_files = int(round(folder_train*total_files*0.5))
+HamData = random.sample(HamData,total_train_files)
+SpamData = random.sample(SpamData,total_train_files)
 
-#print("ham count", hamCount)
-#print("spam", spamCount) """
+HamData = getHam()
+SpamData = getSpam()
 
-HamData = [("ham",filepath) for filepath in HamData]
-SpamData = [("spam",filepath) for filepath in SpamData]
+print(len(HamData))
+print(len(SpamData))
 
-#read features of all files (cached)
-fileFeatureDict = readAllWordFeatures(SpamData, HamData) #readAllWordFeatures FUNCTION
-
-parameters = trainPerceptron(fileFeatureDict)
+fileFeatureDict = readAllWordFeatures(HamData, SpamData)
+parameters_model = trainPerceptron(HamData, SpamData, fileFeatureDict)
 
 with open('per_model.txt','w') as writefile:
-     json.dump(parameters,writefile)
-
-
+     json.dump(parameters_model,writefile)
