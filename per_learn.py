@@ -5,8 +5,8 @@ import json
 from collections import Counter
 
 def readAllWordFeatures(SpamData, HamData):
-    labelFilePathTuples = SpamData + HamData
 
+    labelFilePathTuples = SpamData + HamData
     fileFeatureDict = {}
     wordFeatures = {}
 
@@ -17,22 +17,15 @@ def readAllWordFeatures(SpamData, HamData):
         tokens = content.split()
         wordFeatures = dict(Counter(tokens))
         filestream.close()
-        #wordFeatures = readWordFeatures(each_f) #readWordFeatures function
         fileFeatureDict[t[1]] = wordFeatures
     return fileFeatureDict
 
 def trainPerceptron(HamData,SpamData,fileFeatureDict):
-    """
-    For Ham, set Label = -1, for Spam, set Label = -1
-    return (weights,b)
-    """
+
     labelFilePathTuples = HamData + SpamData
     random.shuffle(labelFilePathTuples)
     weights = {}
-    b = 0
     for i in range(0,20):
-        #randomize file index
-        #random.shuffle(labelFilePathTuples)
         for t in labelFilePathTuples:
             if t[0] == "spam":
                 trueLabel = 1
@@ -45,15 +38,16 @@ def trainPerceptron(HamData,SpamData,fileFeatureDict):
             for word, wordCount in wordCounts.items():
                 if(word not in weights):
                     weights[word] = 0
-
-                wordWeight = weights[word]
+                else:
+                    wordWeight = weights[word]
                 alpha = alpha + wordCount*wordWeight
-
+            b = 0
             alpha = alpha + b
+
             if((trueLabel * alpha > 0)!=1):
                 for word in wordCounts.keys():
-                    weights[word] = weights[word] + trueLabel*wordCounts[word]
-                b = b + trueLabel
+                    weights[word] = trueLabel*wordCounts[word] + weights[word]
+                b = trueLabel + b
 
     return (weights,b)
 
