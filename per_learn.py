@@ -40,7 +40,10 @@ def trainPerceptron(HamData,SpamData,fileFeatureDict):
                     weights[word] = 0
                 else:
                     wordWeight = weights[word]
-                alpha = alpha + wordCount*wordWeight
+                    temp_var = wordCount*wordWeight
+                    alpha =  alpha + temp_var
+
+
             b = 0
             alpha = alpha + b
 
