@@ -47,7 +47,7 @@ def trainPerceptron(HamData,SpamData,fileFeatureDict):
             b = 0
             alpha = alpha + b
 
-            if((trueLabel * alpha > 0)!=1):
+            if((trueLabel * alpha > 0) != 1):
                 for word in wordCounts.keys():
                     weights[word] = trueLabel*wordCounts[word] + weights[word]
                 b = trueLabel + b
