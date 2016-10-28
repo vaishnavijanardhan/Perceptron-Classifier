@@ -1,0 +1,55 @@
+Assignment 2 Report
+
+Name: Vaishnavi Janardhan
+
+Part I.
+
+1. Performance of standard perceptron on the development data with 100% of the training data
+1a. spam precision: 0.9896089691003555
+1b. spam recall: 0.9847619047619047
+1c. spam F1 score:  0.9847619047619047
+1d. ham precision: 0.9631093544137023
+1e. ham recall: 0.9746666666666667
+1f. ham F1 score: 0.9688535453943008
+
+2. Performance of averaged perceptron on the development data with 100% of the training data
+2a. spam precision: 0.9848279599024654
+2b. spam recall: 0.9891156462585035
+2c. spam F1 score: 0.9869671463480858
+2d. ham precision: 0.9730458221024259
+2e. ham recall: 0.9626666666666667
+2f. ham F1 score: 0.9678284182305631
+
+Part II.
+
+3. Performance of standard perceptron on the development data with 10% of the training data
+3a. spam precision: 0.9779267951941883
+3b. spam recall: 0.9523809523809523
+3c. spam F1 score: 0.9649848359525778
+3d. ham precision: Ham 0.8903508771929824
+3e. ham recall: 0.9473333333333334
+3f. ham F1 score: 0.9179586563307494
+
+4. Performance of averaged perceptron on the development data with 10% of the training data
+4a. spam precision: 0.963855421686747
+4b. spam recall: 0.9578231292517007
+4c. spam F1 score: 0.9608298075610754
+4d. ham precision: 0.8982271831910703
+4e. ham recall: 0.912
+4f. ham F1 score: 0.9050611974859412
+
+Part III. You are welcome to reuse code you wrote for assignment 1,
+but we would like to know how you handled the following tasks.
+
+5. How did you calculate precision, recall and F1 score? If you used a
+separate script, please give the name of the script and describe how
+to run it.
+ANS:
+
+
+6. How did you separate 10% of the training data? If you used a
+separate script, please give the name of the script and describe how
+to run it. Explain how you or your code choose the files.
+ANS: I selected 5% from ham files and 5% from spam files, which account to a total of 10% of the given data.
+     I used random.sample() to return distinct files from the population.
+     I have included this in per_learn.py and avg_per_learn.py and this portion of the code has been commented out.
