@@ -5,8 +5,8 @@ import json
 from collections import Counter
 
 def readAllWordFeatures(SpamData, HamData):
-    labelFilePathTuples = SpamData + HamData
 
+    labelFilePathTuples = SpamData + HamData
     fileFeatureDict = {}
     wordFeatures = {}
 
@@ -17,22 +17,20 @@ def readAllWordFeatures(SpamData, HamData):
         tokens = content.split()
         wordFeatures = dict(Counter(tokens))
         filestream.close()
-        #wordFeatures = readWordFeatures(each_f) #readWordFeatures function
         fileFeatureDict[t[1]] = wordFeatures
     return fileFeatureDict
 
 def trainPerceptron(HamData,SpamData,fileFeatureDict):
-    """
-    For Ham, set Label = -1, for Spam, set Label = -1
-    return (weights,b)
-    """
+
     labelFilePathTuples = HamData + SpamData
     random.shuffle(labelFilePathTuples)
     weights = {}
-    b = 0
-    for i in range(0,20):
-        #randomize file index
-        #random.shuffle(labelFilePathTuples)
+    #For averaged Perceptron
+    us = {}
+    beta = 0
+    c = 1
+
+    for i in range(0,30):
         for t in labelFilePathTuples:
             if t[0] == "spam":
                 trueLabel = 1
@@ -44,18 +42,30 @@ def trainPerceptron(HamData,SpamData,fileFeatureDict):
             alpha = 0
             for word, wordCount in wordCounts.items():
                 if(word not in weights):
+                    us[word] = 0
                     weights[word] = 0
+                else:
+                    wordWeight = weights[word]
+                    temp_var = wordCount*wordWeight
+                    alpha =  alpha + temp_var
 
-                wordWeight = weights[word]
-                alpha = alpha + wordCount*wordWeight
-
+            b = 0
             alpha = alpha + b
-            if((trueLabel * alpha > 0)!=1):
+            if((trueLabel * alpha > 0) != 1):
                 for word in wordCounts.keys():
-                    weights[word] = weights[word] + trueLabel*wordCounts[word]
+                    weights[word] = trueLabel*wordCounts[word] + weights[word]
+                    us[word] = trueLabel*c*wordCounts[word] + us[word]
                 b = b + trueLabel
+                beta = trueLabel*c + beta
+            c = c + 1
 
-    return (weights,b)
+    #averaging parameters
+    for word in us:
+        temp_var2 = 1/c
+        us[word] = weights[word] - temp_var2*us[word]
+
+    beta = b - (1/c)*beta
+    return (us,beta)
 
 
 def getHam():
@@ -80,16 +90,6 @@ for drctry, drctry_name, file_name in os.walk(sys.argv[1]):
             else:
                  SpamData.append(os.path.join(drctry,every_file))
 
-
-# Training the learner with only 10% of the data
-
-folder_train = 0.1
-random.seed(100)
-
-total_files = len(HamData) + len(SpamData)
-total_train_files = int(round(folder_train*total_files*0.5))
-HamData = random.sample(HamData,total_train_files)
-SpamData = random.sample(SpamData,total_train_files)
 
 HamData = getHam()
 SpamData = getSpam()
