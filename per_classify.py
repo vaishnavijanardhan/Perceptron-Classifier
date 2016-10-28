@@ -1,55 +1,42 @@
 import json
 import os
 import sys
+from collections import Counter
 
 def readAllWordFeatures(filelpaths):
     fileFeatureDict = {}
-
+    wordFeatures = {}
     for f in filelpaths:
-        wordFeatures = readWordFeatures(f)
+        filestream = open(f,"r",encoding="latin1")
+        content = filestream.read()
+        tokens = content.split()
+        wordFeatures = dict(Counter(tokens))
         fileFeatureDict[f] = wordFeatures
     return fileFeatureDict
 
-def readWordFeatures(filepath):
-    wordFeatures = {}
-
-    try:
-        filestream = open(filepath,"r",encoding="latin1")
-        content = filestream.read()
-        tokens = content.split()
-        for token in tokens:
-            if(token in wordFeatures):
-                wordFeatures[token] = wordFeatures[token] + 1
-            else:
-                wordFeatures[token] = 1
-    except:
-        print("Could not process file {0}".format(f))
-    finally:
-        filestream.close()
-    return wordFeatures
-
-def predict(weights,b,filepath,fileFeatureDict):
-
+def predict(filepath,fileFeatureDict,alpha):
     wordCounts = fileFeatureDict[filepath]
-    #print("Word count", wordCounts)
-
-    alpha = 0
     for word, wordCount in wordCounts.items():
         if(word in weights):
             wordWeight = weights[word]
         else:
-            wordWeight = 0
+             wordWeight = 0
 
-        alpha += wordWeight*wordCount
+        temp_var = wordWeight*wordCount
+        alpha = temp_var + alpha
     prediction = alpha + b
 
     return "spam" if prediction > 0 else "ham"
 
-
 """ Start here **************** """
+
+writeFilePath = sys.argv[2]
+writeContent = ""
 
 with open('per_model.txt') as parameterfile:
     parameters = json.load(parameterfile)
+
+global weights, b
 weights = parameters[0]
 b = parameters[1]
 
@@ -60,22 +47,18 @@ for drctry, drctry_name, file_name in os.walk(sys.argv[1]):
         if ".txt" in every_file:
             all_files.append(os.path.join(drctry,every_file))
 
-fileFeatureDict =readAllWordFeatures(all_files)
-#print(fileFeatureDict)
+fileFeatureDict = readAllWordFeatures(all_files)
 
+alpha = 0
 predictedLabels = []
-#do prediction
 for f in all_files:
-    predictedLabel = predict(weights,b,f,fileFeatureDict)
+    predictedLabel = predict(f,fileFeatureDict,alpha)
     predictedLabels = predictedLabels + [predictedLabel]
 
-#WRITE OUTPUT
-writeFilePath = sys.argv[2]
-
-writeContent = ""
-for result in zip(all_files,predictedLabels):
-    writeContent = writeContent + "{0} {1}".format(result[1],result[0]) + "\n"
-
 outputfile = open(writeFilePath,"w", encoding="latin1")
+
+for result in zip(all_files,predictedLabels):
+    writeContent = "{0} {1}".format(result[1],result[0]) + "\n" + writeContent
+
 outputfile.write(writeContent)
 outputfile.close()
