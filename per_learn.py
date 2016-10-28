@@ -77,6 +77,11 @@ for drctry, drctry_name, file_name in os.walk(sys.argv[1]):
             else:
                  SpamData.append(os.path.join(drctry,every_file))
 
+""" # Training the learner with only 10% of the data
+total_files = len(HamData) + len(SpamData)
+total_train_files = int(round(0.1*total_files*0.5))
+HamData = random.sample(HamData,total_train_files)
+SpamData = random.sample(SpamData,total_train_files) """
 
 HamData = getHam()
 SpamData = getSpam()
